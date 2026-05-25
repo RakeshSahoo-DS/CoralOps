@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoralOps — AI DevOps Command Center</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Lora:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080c14;
+  --surface: #0d1421;
+  --surface2: #121a2b;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --coral: #ff5f40;
+  --gold: #f5a623;
+  --teal: #00e5c0;
+  --blue: #4d9fff;
+  --text: #e8edf5;
+  --muted: #6b7d99;
+  --danger: #ff3d3d;
+  --warn: #ffb020;
+  --ok: #00e5c0;
+  --r: 12px;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* mesh bg */
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background:
+    radial-gradient(600px circle at 10% 20%, rgba(0,229,192,.04), transparent),
+    radial-gradient(600px circle at 90% 80%, rgba(255,95,64,.04), transparent),
+    radial-gradient(800px circle at 50% 50%, rgba(77,159,255,.03), transparent);
+  pointer-events:none; z-index:0;
+}
+
+.wrap { position:relative; z-index:1; max-width:1280px; margin:0 auto; padding:0 24px; }
+
+/* ── NAV ── */
+nav {
+  position:sticky; top:0; z-index:200;
+  background:rgba(8,12,20,.85);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:0 24px;
+}
+
+.nav-inner {
+  max-width:1280px; margin:0 auto;
+  display:flex; align-items:center; justify-content:space-between;
+  height:60px;
+}
+
+.brand {
+  display:flex; align-items:center; gap:10px;
+}
+
+.brand-icon {
+  width:32px; height:32px;
+  background:linear-gradient(135deg, var(--coral), var(--gold));
+  border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1rem;
+  box-shadow:0 0 16px rgba(255,95,64,.35);
+}
+
+.brand-name {
+  font-size:1.1rem; font-weight:800;
+  letter-spacing:-.02em;
+  background:linear-gradient(90deg, var(--text), var(--muted));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+
+.nav-pills { display:flex; gap:8px; }
+
+.pill {
+  padding:4px 12px; border-radius:20px;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:.7rem; font-weight:600;
+  border:1px solid; cursor:default;
+  display:flex; align-items:center; gap:5px;
+}
+
+.pill-dot {
+  width:6px; height:6px; border-radius:50%;
+  animation:blink 2s infinite;
+}
+
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.pill-gh  { border-color:rgba(0,229,192,.3); color:var(--teal); }
+.pill-gh  .pill-dot { background:var(--teal); box-shadow:0 0 6px var(--teal); }
+.pill-sen { border-color:rgba(255,95,64,.3);  color:var(--coral); }
+.pill-sen .pill-dot { background:var(--coral); box-shadow:0 0 6px var(--coral); }
+.pill-sl  { border-color:rgba(245,166,35,.3); color:var(--gold); }
+.pill-sl  .pill-dot { background:var(--gold); box-shadow:0 0 6px var(--gold); }
+
+/* ── HERO ── */
+.hero {
+  padding:60px 0 40px;
+  text-align:center;
+}
+
+.hero-eyebrow {
+  font-family:'IBM Plex Mono', monospace;
+  font-size:.75rem; font-weight:500;
+  color:var(--coral);
+  letter-spacing:.2em; text-transform:uppercase;
+  margin-bottom:16px;
+}
+
+.hero h1 {
+  font-size:clamp(2rem, 5vw, 3.5rem);
+  font-weight:800; letter-spacing:-.03em;
+  line-height:1.1;
+  margin-bottom:16px;
+}
+
+.hero h1 em {
+  font-style:normal;
+  background:linear-gradient(90deg, var(--coral), var(--gold));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+
+.hero-sub {
+  font-family:'Lora', serif;
+  font-style:italic;
+  color:var(--muted);
+  font-size:1.05rem;
+  margin-bottom:36px;
+}
+
+/* ── INVESTIGATE ── */
+.investigate {
+  max-width:640px; margin:0 auto 52px;
+  display:flex; gap:10px;
+}
+
+.investigate input {
+  flex:1;
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:var(--r);
+  padding:13px 18px;
+  color:var(--text);
+  font-family:'IBM Plex Mono', monospace;
+  font-size:.82rem;
+  outline:none;
+  transition:border-color .2s, box-shadow .2s;
+}
+
+.investigate input:focus {
+  border-color:var(--teal);
+  box-shadow:0 0 0 3px rgba(0,229,192,.1);
+}
+
+.investigate input::placeholder { color:var(--muted); }
+
+.btn-main {
+  background:linear-gradient(135deg, var(--coral) 0%, #e03a1d 100%);
+  color:#fff; border:none;
+  border-radius:var(--r);
+  padding:13px 22px;
+  font-family:'Syne', sans-serif;
+  font-size:.82rem; font-weight:700;
+  cursor:pointer; white-space:nowrap;
+  transition:all .2s;
+  box-shadow:0 4px 20px rgba(255,95,64,.35);
+}
+
+.btn-main:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(255,95,64,.5); }
+.btn-main:active { transform:none; }
+.btn-main:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+
+/* ── ALERT ── */
+.alert-wrap { margin-bottom:24px; }
+
+.alert {
+  padding:14px 20px;
+  border-radius:var(--r);
+  border-left:4px solid;
+  font-size:.9rem;
+  display:flex; align-items:flex-start; gap:12px;
+  animation:fadeUp .4s ease;
+}
+
+@keyframes fadeUp {
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:none}
+}
+
+.alert-crit { background:rgba(255,61,61,.08); border-color:var(--danger); color:#ffb0b0; }
+.alert-warn { background:rgba(255,176,32,.08); border-color:var(--warn);   color:#ffe0a0; }
+.alert-ok   { background:rgba(0,229,192,.08);  border-color:var(--teal);   color:#a0ffee; }
+
+/* ── STATS ── */
+.stats {
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
+  gap:16px; margin-bottom:24px;
+}
+
+.stat {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:20px;
+  position:relative; overflow:hidden;
+  transition:border-color .2s, transform .2s;
+}
+
+.stat::after {
+  content:'';
+  position:absolute; top:0; left:0; right:0; height:2px;
+  background:var(--accent);
+}
+
+.stat:hover { border-color:var(--border2); transform:translateY(-2px); }
+
+.stat-num {
+  font-size:2.2rem; font-weight:800;
+  color:var(--accent);
+  line-height:1; margin-bottom:6px;
+  font-variant-numeric:tabular-nums;
+}
+
+.stat-label {
+  font-size:.72rem; font-weight:600;
+  color:var(--muted); letter-spacing:.1em; text-transform:uppercase;
+}
+
+/* ── GRID ── */
+.grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px; margin-bottom:24px;
+}
+
+.grid-3 {
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:16px; margin-bottom:24px;
+}
+
+.card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  overflow:hidden;
+  transition:border-color .2s;
+}
+
+.card:hover { border-color:var(--border2); }
+.card-full { grid-column:1/-1; }
+
+.card-head {
+  padding:14px 18px;
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+}
+
+.card-title {
+  display:flex; align-items:center; gap:8px;
+  font-size:.8rem; font-weight:700;
+  letter-spacing:.05em; text-transform:uppercase;
+  color:var(--muted);
+}
+
+.card-title .dot {
+  width:7px; height:7px; border-radius:50%;
+  background:var(--dc, var(--teal));
+  box-shadow:0 0 8px var(--dc, var(--teal));
+  animation:blink 2s infinite;
+}
+
+.card-badge {
+  font-family:'IBM Plex Mono', monospace;
+  font-size:.68rem; color:var(--muted);
+}
+
+.card-body { padding:14px 18px; }
+
+/* ── ITEMS ── */
+.item {
+  padding:10px 12px;
+  border-radius:8px;
+  background:rgba(255,255,255,.02);
+  border:1px solid rgba(255,255,255,.04);
+  margin-bottom:8px;
+  transition:all .15s;
+}
+
+.item:last-child { margin-bottom:0; }
+.item:hover { background:rgba(255,255,255,.04); border-color:rgba(255,255,255,.09); transform:translateX(2px); }
+
+.item-name {
+  font-size:.88rem; font-weight:600;
+  color:var(--text); margin-bottom:4px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+.item-meta {
+  font-family:'IBM Plex Mono', monospace;
+  font-size:.68rem; color:var(--muted);
+  display:flex; gap:12px; flex-wrap:wrap; align-items:center;
+}
+
+.tag {
+  padding:2px 7px; border-radius:4px;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:.62rem; font-weight:600;
+  text-transform:uppercase; border:1px solid;
+}
+
+.t-fatal   { background:rgba(255,61,61,.15);  color:var(--danger); border-color:rgba(255,61,61,.3); }
+.t-error   { background:rgba(255,95,64,.15);  color:var(--coral);  border-color:rgba(255,95,64,.3); }
+.t-warning { background:rgba(255,176,32,.12); color:var(--warn);   border-color:rgba(255,176,32,.3); }
+.t-info    { background:rgba(0,229,192,.1);   color:var(--teal);   border-color:rgba(0,229,192,.25); }
+.t-ok      { background:rgba(0,229,192,.1);   color:var(--teal);   border-color:rgba(0,229,192,.25); }
+
+/* ── AI REPORT ── */
+.ai-report {
+  background:linear-gradient(135deg, rgba(0,229,192,.04), rgba(77,159,255,.04));
+  border:1px solid rgba(0,229,192,.15);
+  border-radius:var(--r);
+  padding:20px;
+  font-family:'Lora', serif;
+  font-size:.95rem;
+  line-height:1.8;
+  color:#c8daf0;
+  white-space:pre-wrap;
+  min-height:120px;
+}
+
+.ai-report strong { color:var(--teal); font-family:'Syne', sans-serif; }
+.ai-report em { color:var(--gold); }
+
+/* ── SQL CONSOLE ── */
+.console-wrap {
+  background:rgba(0,0,0,.5);
+  border:1px solid rgba(0,229,192,.15);
+  border-radius:var(--r);
+  overflow:hidden;
+}
+
+.console-bar {
+  background:rgba(0,229,192,.05);
+  border-bottom:1px solid rgba(0,229,192,.1);
+  padding:8px 16px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+
+.console-bar span {
+  font-family:'IBM Plex Mono', monospace;
+  font-size:.7rem; color:var(--teal);
+}
+
+.btn-run {
+  background:rgba(0,229,192,.12);
+  border:1px solid rgba(0,229,192,.3);
+  color:var(--teal);
+  border-radius:6px;
+  padding:5px 14px;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:.72rem; font-weight:600;
+  cursor:pointer; transition:all .2s;
+}
+
+.btn-run:hover { background:rgba(0,229,192,.22); }
+
+.console-presets {
+  padding:10px 16px 0;
+  display:flex; gap:8px; flex-wrap:wrap;
+}
+
+.preset {
+  font-family:'IBM Plex Mono', monospace;
+  font-size:.65rem;
+  color:var(--muted);
+  background:rgba(255,255,255,.03);
+  border:1px solid var(--border);
+  border-radius:5px;
+  padding:4px 10px;
+  cursor:pointer; transition:all .15s;
+}
+
+.preset:hover { color:var(--teal); border-color:rgba(0,229,192,.3); }
+
+textarea {
+  width:100%; background:transparent; border:none;
+  color:var(--teal);
+  font-family:'IBM Plex Mono', monospace;
+  font-size:.8rem; line-height:1.6;
+  resize:vertical; min-height:90px;
+  outline:none; padding:14px 16px;
+}
+
+.console-out {
+  background:rgba(0,0,0,.3);
+  border-top:1px solid var(--border);
+  padding:14px 16px;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:.72rem; color:var(--muted);
+  max-height:220px; overflow-y:auto;
+  white-space:pre-wrap; word-break:break-all;
+  line-height:1.6;
+}
+
+/* ── LOADING ── */
+.loading {
+  display:flex; align-items:center; justify-content:center;
+  gap:10px; padding:28px;
+  color:var(--muted); font-style:italic; font-size:.9rem;
+}
+
+.spinner {
+  width:16px; height:16px;
+  border:2px solid rgba(255,255,255,.08);
+  border-top-color:var(--teal);
+  border-radius:50%;
+  animation:spin .7s linear infinite;
+  flex-shrink:0;
+}
+
+@keyframes spin { to{transform:rotate(360deg)} }
+
+.empty {
+  text-align:center; padding:24px;
+  color:var(--muted); font-style:italic; font-size:.88rem; opacity:.7;
+}
+
+/* ── FOOTER ── */
+footer {
+  text-align:center; padding:32px 24px;
+  color:var(--muted); font-size:.78rem;
+  border-top:1px solid var(--border);
+  margin-top:40px;
+}
+
+footer a { color:var(--coral); text-decoration:none; }
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px) {
+  .stats { grid-template-columns:repeat(2,1fr); }
+  .grid, .grid-3 { grid-template-columns:1fr; }
+  .card-full { grid-column:1; }
+  .nav-pills { display:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <div class="brand">
+      <div class="brand-icon">🪸</div>
+      <span class="brand-name">CoralOps</span>
+    </div>
+    <div class="nav-pills">
+      <div class="pill pill-gh"><div class="pill-dot"></div>GitHub</div>
+      <div class="pill pill-sen"><div class="pill-dot"></div>Sentry</div>
+      <div class="pill pill-sl"><div class="pill-dot"></div>Slack</div>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="wrap">
+  <div class="hero">
+    <div class="hero-eyebrow">Pirates of the Coral-bean · Track 1 · Enterprise Agent</div>
+    <h1>Your DevOps<br><em>Command Center</em></h1>
+    <p class="hero-sub">GitHub + Sentry + Slack — one SQL query, one AI report, zero tab-switching</p>
+  </div>
+
+  <!-- INVESTIGATE -->
+  <div class="investigate">
+    <input id="repoInput" type="text" placeholder="owner/repo  e.g. RakeshSahoo-DS/hospital-patient-records" value="RakeshSahoo-DS/hospital-patient-records"/>
+    <button class="btn-main" id="investigateBtn" onclick="runInvestigation()">⚔️ Investigate</button>
+  </div>
+
+  <!-- ALERT -->
+  <div class="alert-wrap" id="alertWrap"></div>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat" style="--accent:var(--teal)">
+      <div class="stat-num" id="sRepos">—</div>
+      <div class="stat-label">GitHub Repos</div>
+    </div>
+    <div class="stat" style="--accent:var(--coral)">
+      <div class="stat-num" id="sIssues">—</div>
+      <div class="stat-label">Open Issues</div>
+    </div>
+    <div class="stat" style="--accent:var(--danger)">
+      <div class="stat-num" id="sErrors">—</div>
+      <div class="stat-label">Sentry Errors</div>
+    </div>
+    <div class="stat" style="--accent:var(--gold)">
+      <div class="stat-num" id="sSlack">—</div>
+      <div class="stat-label">Slack Channels</div>
+    </div>
+  </div>
+
+  <!-- AI REPORT -->
+  <div class="card card-full" style="margin-bottom:16px;">
+    <div class="card-head">
+      <div class="card-title">
+        <div class="dot" style="--dc:var(--blue)"></div>
+        AI Incident Analysis · Powered by Claude
+      </div>
+      <span class="card-badge" id="aiStatus">awaiting investigation</span>
+    </div>
+    <div class="card-body">
+      <div class="ai-report" id="aiReport">
+Run an investigation above to get an AI-powered root cause analysis across GitHub, Sentry, and Slack — all powered by Coral's cross-source SQL.
+      </div>
+    </div>
+  </div>
+
+  <!-- DATA GRID -->
+  <div class="grid">
+    <!-- GitHub Repos -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><div class="dot" style="--dc:var(--teal)"></div>GitHub Repos</div>
+        <span class="card-badge" id="bRepos">loading…</span>
+      </div>
+      <div class="card-body" id="listRepos">
+        <div class="loading"><div class="spinner"></div>Querying via Coral…</div>
+      </div>
+    </div>
+
+    <!-- Sentry -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><div class="dot" style="--dc:var(--coral)"></div>Sentry Errors</div>
+        <span class="card-badge" id="bSentry">loading…</span>
+      </div>
+      <div class="card-body" id="listSentry">
+        <div class="loading"><div class="spinner"></div>Querying via Coral…</div>
+      </div>
+    </div>
+
+    <!-- Open Issues -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><div class="dot" style="--dc:var(--warn)"></div>Open Issues</div>
+        <span class="card-badge" id="bIssues">run investigation</span>
+      </div>
+      <div class="card-body" id="listIssues">
+        <div class="empty">Click Investigate to load issues</div>
+      </div>
+    </div>
+
+    <!-- Slack -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><div class="dot" style="--dc:var(--gold)"></div>Slack Channels</div>
+        <span class="card-badge" id="bSlack">loading…</span>
+      </div>
+      <div class="card-body" id="listSlack">
+        <div class="loading"><div class="spinner"></div>Querying via Coral…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SQL CONSOLE -->
+  <div class="card card-full" style="margin-bottom:40px;">
+    <div class="card-head">
+      <div class="card-title"><div class="dot" style="--dc:var(--teal)"></div>Coral SQL Console</div>
+      <span class="card-badge">cross-source queries</span>
+    </div>
+    <div class="card-body" style="padding:0">
+      <div class="console-wrap">
+        <div class="console-bar">
+          <span>coral&gt; sql</span>
+          <button class="btn-run" onclick="runSQL()">▶ Run</button>
+        </div>
+        <div class="console-presets">
+          <div class="preset" onclick="setSQL(`SELECT full_name, language, stargazers_count FROM github.user_repos LIMIT 5`)">github repos</div>
+          <div class="preset" onclick="setSQL(`SELECT title, level, status FROM sentry.issues LIMIT 5`)">sentry errors</div>
+          <div class="preset" onclick="setSQL(`SELECT name, num_members FROM slack.channels LIMIT 5`)">slack channels</div>
+          <div class="preset" onclick="setSQL(`SELECT schema_name, table_name FROM coral.tables ORDER BY 1,2`)">all tables</div>
+        </div>
+        <textarea id="sqlInput">SELECT full_name, language, stargazers_count FROM github.user_repos LIMIT 5</textarea>
+        <div class="console-out" id="sqlOut">-- results appear here</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Built with ⚓ by <a href="#">The Lone Corsair (Rakesh Kumar Sahoo)</a> ·
+  Pirates of the Coral-bean Hackathon · Powered by
+  <a href="https://withcoral.com" target="_blank">Coral DB</a>
+</footer>
+
+<script>
+const API = 'http://localhost:8000';
+
+const q = id => document.getElementById(id);
+
+function tag(level) {
+  const m = { fatal:'t-fatal', error:'t-error', warning:'t-warning', info:'t-info' };
+  return `<span class="tag ${m[level]||'t-ok'}">${level||'info'}</span>`;
+}
+
+function ago(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr), now = new Date();
+  const diff = Math.floor((now-d)/1000);
+  if (diff < 60) return `${diff}s ago`;
+  if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+  return `${Math.floor(diff/86400)}d ago`;
+}
+
+async function loadRepos() {
+  try {
+    const d = await fetch(`${API}/api/repos`).then(r=>r.json());
+    q('sRepos').textContent = d.count;
+    q('bRepos').textContent = `${d.count} repos`;
+    q('listRepos').innerHTML = d.repos.map(r=>`
+      <div class="item">
+        <div class="item-name">${r.full_name||'—'}</div>
+        <div class="item-meta">
+          <span>⭐ ${r.stargazers_count||0}</span>
+          <span>🔧 ${r.language||'—'}</span>
+          <span>${ago(r.updated_at)}</span>
+        </div>
+      </div>`).join('') || '<div class="empty">No repos found</div>';
+  } catch(e) {
+    q('listRepos').innerHTML = `<div class="empty">Backend offline — run python main.py</div>`;
+  }
+}
+
+async function loadSentry() {
+  try {
+    const d = await fetch(`${API}/api/sentry`).then(r=>r.json());
+    q('sErrors').textContent = d.issues.length;
+    q('bSentry').textContent = `${d.issues.length} issues`;
+    q('listSentry').innerHTML = d.issues.length
+      ? d.issues.map(i=>`
+          <div class="item">
+            <div class="item-name">${i.title||'Unknown error'}</div>
+            <div class="item-meta">
+              ${tag(i.level)}
+              <span>${i.status||'unresolved'}</span>
+              <span>${ago(i.first_seen)}</span>
+            </div>
+          </div>`).join('')
+      : '<div class="empty">No Sentry errors — smooth sailing! ✅</div>';
+  } catch(e) {
+    q('listSentry').innerHTML = `<div class="empty">Backend offline</div>`;
+  }
+}
+
+async function loadSlack() {
+  try {
+    const d = await fetch(`${API}/api/slack`).then(r=>r.json());
+    q('sSlack').textContent = d.channels.length;
+    q('bSlack').textContent = `${d.channels.length} channels`;
+    q('listSlack').innerHTML = d.channels.map(c=>`
+      <div class="item">
+        <div class="item-name"># ${c.name||'unknown'}</div>
+        <div class="item-meta"><span>👥 ${c.num_members||0} members</span></div>
+      </div>`).join('') || '<div class="empty">No channels</div>';
+  } catch(e) {
+    q('listSlack').innerHTML = `<div class="empty">Backend offline</div>`;
+  }
+}
+
+async function runInvestigation() {
+  const btn = q('investigateBtn');
+  btn.disabled = true; btn.textContent = '⏳ Investigating…';
+  q('aiReport').innerHTML = '<div class="loading"><div class="spinner"></div>Querying GitHub + Sentry + Slack via Coral… then analyzing with Claude AI…</div>';
+  q('aiStatus').textContent = 'analyzing…';
+  q('alertWrap').innerHTML = '';
+  q('listIssues').innerHTML = '<div class="loading"><div class="spinner"></div>Loading…</div>';
+
+  try {
+    const d = await fetch(`${API}/api/dashboard`).then(r=>r.json());
+
+    // stats
+    q('sRepos').textContent  = d.summary.repo_count;
+    q('sIssues').textContent = d.summary.open_issues;
+    q('sErrors').textContent = d.summary.sentry_errors;
+    q('sSlack').textContent  = d.summary.slack_channels;
+
+    // alert
+    const crit = d.summary.critical_errors;
+    const alertWrap = q('alertWrap');
+    if (crit > 0) {
+      alertWrap.innerHTML = `<div class="alert alert-crit">🚨 <strong>CRITICAL:</strong> ${crit} fatal/error-level issues in Sentry. Immediate action required. ReefGuard queried 3 sources simultaneously via Coral.</div>`;
+    } else if (d.summary.open_issues > 0) {
+      alertWrap.innerHTML = `<div class="alert alert-warn">⚠️ <strong>WARNING:</strong> ${d.summary.open_issues} open GitHub issues detected. Review recommended.</div>`;
+    } else {
+      alertWrap.innerHTML = `<div class="alert alert-ok">✅ <strong>All Clear:</strong> No critical issues across GitHub, Sentry, or Slack.</div>`;
+    }
+
+    // AI report — format markdown-style bold
+    let report = d.ai_report || 'No AI analysis available.';
+    report = report.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    report = report.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    q('aiReport').innerHTML = report;
+    q('aiStatus').textContent = `analyzed ${new Date().toLocaleTimeString()}`;
+
+    // issues
+    const issues = d.github_issues || [];
+    q('bIssues').textContent = `${issues.length} open`;
+    q('listIssues').innerHTML = issues.length
+      ? issues.map(i=>`
+          <div class="item">
+            <div class="item-name">#${i.number} ${i.title}</div>
+            <div class="item-meta">
+              <span class="tag t-ok">open</span>
+              <span>${ago(i.created_at)}</span>
+            </div>
+          </div>`).join('')
+      : '<div class="empty">No open issues ⚓</div>';
+
+    // refresh sentry with investigation data
+    const errs = d.sentry_issues || [];
+    q('bSentry').textContent = `${errs.length} issues`;
+    q('listSentry').innerHTML = errs.length
+      ? errs.map(i=>`
+          <div class="item">
+            <div class="item-name">${i.title||'Error'}</div>
+            <div class="item-meta">${tag(i.level)}<span>${i.status||''}</span></div>
+          </div>`).join('')
+      : '<div class="empty">No errors ✅</div>';
+
+  } catch(e) {
+    q('aiReport').textContent = `Investigation failed: ${e.message}\n\nMake sure the backend is running:\n  cd backend\n  python main.py`;
+    q('aiStatus').textContent = 'error';
+  } finally {
+    btn.disabled = false; btn.textContent = '⚔️ Investigate';
+  }
+}
+
+function setSQL(sql) { q('sqlInput').value = sql; }
+
+async function runSQL() {
+  const sql = q('sqlInput').value.trim();
+  if (!sql) return;
+  q('sqlOut').textContent = 'Running…';
+  try {
+    const d = await fetch(`${API}/api/query`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({sql})
+    }).then(r=>r.json());
+    q('sqlOut').textContent = JSON.stringify(d.results, null, 2);
+  } catch(e) {
+    q('sqlOut').textContent = `Error: ${e.message}`;
+  }
+}
+
+// Init
+loadRepos();
+loadSentry();
+loadSlack();
+</script>
+</body>
+</html>
